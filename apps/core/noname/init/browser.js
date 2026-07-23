@@ -2,6 +2,7 @@
 export default async function browserReady({ lib, game }) {
 	lib.path = (await import("path-browserify-esm")).default;
 
+	let hasFileSystemServer = true;
 	try {
 		await fetch(`/checkFile?fileName=noname.js`)
 			.then(response => response.json())
@@ -9,8 +10,8 @@ export default async function browserReady({ lib, game }) {
 				if (!result?.success) throw new Error(result.errorMsg);
 			});
 	} catch (e) {
-		console.error("文件读写函数初始化失败:", e);
-		return;
+		hasFileSystemServer = false;
+		console.warn("文件读写服务不可用，将以纯静态网页模式运行:", e);
 	}
 
 	game.export = function (data, name) {
@@ -48,6 +49,11 @@ export default async function browserReady({ lib, game }) {
 	 * @return {void} - 由于三端的异步需求和历史原因，文件管理必须为回调异步函数
 	 */
 	game.checkFile = function checkFile(fileName, callback, onerror) {
+		if (!hasFileSystemServer) {
+			callback?.(-1);
+			return;
+		}
+
 		fetch(`/checkFile?fileName=${fileName}`)
 			.then(response => response.json())
 			.then(result => {
@@ -84,6 +90,11 @@ export default async function browserReady({ lib, game }) {
 	 * @return {void} - 由于三端的异步需求和历史原因，文件管理必须为回调异步函数
 	 */
 	game.checkDir = function checkDir(dir, callback, onerror) {
+		if (!hasFileSystemServer) {
+			callback?.(-1);
+			return;
+		}
+
 		fetch(`/checkDir?dir=${dir}`)
 			.then(response => response.json())
 			.then(result => {
