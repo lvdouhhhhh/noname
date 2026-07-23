@@ -1,4 +1,6 @@
 export default {
+	tw_lingju: "情随梦逝",
+	tw_sb_xiahoudun: "独眼的罗刹",
 	tw_yj_fazheng: "弹铗待试",
 	tw_shen_guanyu: "魂追弗届",
 	tw_shen_lvmeng: "兼资文武",
@@ -152,4 +154,8 @@ export default {
 	tw_jsrg_hejin: "独意误国谋", //由于没有找到插画，先用起何进的称号代替一下
 	tw_jsrg_caocao: "汉征西将军", //跟上面的何进同理
 	tw_jsrg_huangfusong: "安危定倾",
+	tw_sxrm_huatuo: "上医医国",
+	tw_sxrm_liubei: "潜隐波涛",
+	tw_sxrm_caocao: "一目窥九州",
+	tw_sxrm_fuhuanghou: "白绫蔽月",
 };

@@ -919,7 +919,7 @@ const skills = {
 	wuhun2: { audio: 2 },
 	new_wuhun: {
 		audio: "wuhun2",
-		audioname2: { sxrm_caocao: "wuhun_sxrm_caocao" },
+		audioname2: { sxrm_caocao: "wuhun_sxrm_caocao", tw_sxrm_caocao: "wuhun_sxrm_caocao" },
 		trigger: { player: "damageEnd" },
 		filter(event, player) {
 			return event.source && event.source.isIn();
@@ -3505,7 +3505,7 @@ const skills = {
 			source: "damageSource",
 		},
 		filter(event, player) {
-			if (player.storage.drlt_duorui.length) {
+			if (player.storage.drlt_duorui.length || event.player === player) {
 				return false;
 			}
 			return event.player.isIn() && _status.currentPhase == player;

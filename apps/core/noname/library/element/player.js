@@ -8531,11 +8531,13 @@ export class Player extends HTMLDivElement {
 			Object.assign(next, params);
 			if (params?.areaNames != null) {
 				delete next.areaNames;
-				const commonAreas = [...lib.commonArea.values()];
+				const commonAreas = lib.commonArea.entries();
 				for (const areaName of params.areaNames) {
-					if (commonAreas.some(area => area?.fromName === areaName)) {
+					const item = commonAreas.find(([name, area]) => name === areaName || area?.fromName === areaName);
+					if (item != null) {
+						const [_name, area] = item;
 						next.fromStorage = true;
-						next[areaName] = true;
+						next[area.fromName] = true;
 					}
 				}
 			}
@@ -11497,6 +11499,17 @@ export class Player extends HTMLDivElement {
 		if (this.storage[skill] === undefined || this.storage[skill] === false) {
 			this.storage[skill] = true;
 		}
+		_status.event.clearStepCache();
+		return this;
+	}
+	awakenQidingSkill(skill){
+		if (this.storage[skill]) {
+			return;
+		}
+		if (this.storage[skill] === undefined || this.storage[skill] === false) {
+			this.storage[skill] = true;
+		}
+		game.log(`契约已成，${get.translation(this)}将【${get.translation(skill)}】改为锁定技。`);
 		_status.event.clearStepCache();
 		return this;
 	}
