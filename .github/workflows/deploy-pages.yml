@@ -42,6 +42,81 @@ jobs:
       - name: Build web client
         run: pnpm build
 
+      - name: Make dependency paths GitHub Pages compatible
+        shell: bash
+        run: |
+          test -d dist/node_modules
+          mv dist/node_modules dist/vendor
+
+          while IFS= read -r -d '' directory; do
+            mv "$directory" "$(dirname "$directory")/vendor"
+          done < <(find dist/vendor -depth -type d -name node_modules -print0)
+
+          find dist -type f             ( -name '*.html' -o -name '*.js' -o -name '*.mjs' -o -name '*.cjs' -o -name '*.ts' -o -name '*.css' -o -name '*.json' -o -name '*.vue' )             -print0 | xargs -0 sed -i 's#node_modules/#vendor/#g'
+
+      - name: Disable Jekyll
+        run: touch dist/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    environment:
+      name: github-pages
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+name: Build and Deploy Noname
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web client
+        run: pnpm build
+
       - name: Disable Jekyll
         run: touch dist/.nojekyll
 
