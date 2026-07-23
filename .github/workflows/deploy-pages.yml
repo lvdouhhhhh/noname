@@ -52,7 +52,7 @@ jobs:
             mv "$directory" "$(dirname "$directory")/vendor"
           done < <(find dist/vendor -depth -type d -name node_modules -print0)
 
-          find dist -type f             ( -name '*.html' -o -name '*.js' -o -name '*.mjs' -o -name '*.cjs' -o -name '*.ts' -o -name '*.css' -o -name '*.json' -o -name '*.vue' )             -print0 | xargs -0 sed -i 's#node_modules/#vendor/#g'
+          find dist -type f \( -name '*.html' -o -name '*.js' -o -name '*.mjs' -o -name '*.cjs' -o -name '*.ts' -o -name '*.css' -o -name '*.json' -o -name '*.vue' \) -print0 | xargs -0 sed -i 's#node_modules/#vendor/#g'
 
       - name: Disable Jekyll
         run: touch dist/.nojekyll
