@@ -1,4 +1,10 @@
 const characters = {
+	sb_guoyouzhi: {
+		sex: "male",
+		group: "shu",
+		hp: 3,
+		skills: ["sbpique", "sbzhongchun"],
+	},
 	sb_chentai: {
 		sex: "male",
 		group: "wei",
@@ -49,6 +55,7 @@ const characters = {
 		hp: 3,
 		skills: ["sbhuanshi", "sbhongyuan", "sbmingzhe"],
 		names: "诸葛|瑾",
+		clans: ["琅琊诸葛氏"],
 	},
 	sb_jiaxu: {
 		sex: "male",
@@ -115,6 +122,7 @@ const characters = {
 		hp: 3,
 		skills: ["sbhuoji", "sbkanpo"],
 		names: "诸葛|亮",
+		clans: ["琅琊诸葛氏"],
 	},
 	sb_zhanghe: {
 		sex: "male",

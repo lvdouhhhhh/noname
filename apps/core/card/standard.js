@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { lib, game, ui, get, ai, _status } from "noname";
 
 export const type = "card";
@@ -252,7 +253,7 @@ export default {
 					}
 					if (game.hasNature(event.card, "stab") && target.countCards("h") > 0) {
 						const discardResult = await target
-							.chooseToDiscard("刺杀：请弃置一张牌，否则此【杀】依然造成伤害")
+							.chooseToDiscard("刺杀：请弃置一张手牌，否则此刺【杀】依然造成伤害")
 							.set("ai", card => {
 								const target = _status.event.player;
 								const evt = _status.event.getParent();
@@ -1052,7 +1053,7 @@ export default {
 					}
 				}
 				ui.clear();
-				let cards;
+				let cards = [];
 				const nextEvents = [];
 				if (get.itemtype(card.storage?.fixedShownCards) === "cards") {
 					cards = card.storage.fixedShownCards.slice();
@@ -1101,7 +1102,7 @@ export default {
 					orderingEvent.relatedEvent = event.getParent();
 					nextEvents.push(orderingEvent);
 				}
-				event.getParent().set(get.name(event.card) + "ShownCards", cards);
+				event.getParent().wuguShownCards = cards;
 				const dialog = ui.create.dialog("五谷丰登", cards, true);
 				_status.dieClose.push(dialog);
 				dialog.videoId = lib.status.videoId++;
@@ -1224,8 +1225,9 @@ export default {
 				if (remainedEvent) {
 					await remainedEvent;
 				}
-				const { [get.name(event.card) + "ShownCards"]: cards } = event.getParent();
-				if (cards.someInD()) {
+				const cards = event.remained;
+				if (get.itemtype(cards) == "cards" && cards.someInD()) {
+					game.log(cards.filterInD(), "被置入了弃牌堆");
 					await game.cardsDiscard(cards.filterInD());
 				}
 			},
@@ -3136,12 +3138,6 @@ export default {
 						triggerEvent.getParent().excluded.addArray(game.filterPlayer(current => current.isFriendOf(triggerEvent.target)));
 					}
 				}
-				/*
-					event.result={
-						wuxied:true,
-						directHit:evt.directHit||[],
-						nowuxie:evt.nowuxie,
-					};*/
 				if (player.isOnline()) {
 					player.send(player => {
 						if (ui.tempnowuxie && !player.hasWuxie()) {
@@ -3743,28 +3739,38 @@ export default {
 				}
 				return event.target.isIn() && player.canUse("sha", event.target, false) && (player.hasSha() || (_status.connectMode && player.hasCards("hs")));
 			},
+			clearTime: true,
 			async content(event, trigger, player) {
-				await player
-					.chooseToUse({
-						prompt: get.prompt("qinglong", trigger.target),
-						filterCard(card, player, event) {
-							if (get.name(card) !== "sha") {
-								return false;
-							}
-							if (player.hasSkill("qinglong_skill", null, false)) {
-								return lib.filter.filterCard.apply(this, arguments);
-							}
-							const cards = player.getCards("e", card => get.name(card) === "qinglong");
-							if (!cards.some(card2 => card2 !== card && !ui.selected.cards.includes(card2))) {
-								return false;
-							}
+				const { target } = trigger;
+				const next = player.chooseToUse({
+					prompt: get.prompt2(event.name, target),
+					filterCard(card, player, event) {
+						if (get.name(card) !== "sha") {
+							return false;
+						}
+						if (player.hasSkill("qinglong_skill", null, false)) {
 							return lib.filter.filterCard.apply(this, arguments);
-						},
-						filterTarget: get.filter(trigger.target, 2),
-						selectTarget: -1,
-					})
-					.set("addCount", false)
-					.set("logSkill", "qinglong_skill");
+						}
+						const cards = player.getCards("e", card => get.name(card) === "qinglong");
+						if (!cards.some(card2 => card2 !== card && !ui.selected.cards.includes(card2))) {
+							return false;
+						}
+						return lib.filter.filterCard.apply(this, arguments);
+					},
+				});
+				next.set("targetRequired", true);
+				next.set("complexTarget", true);
+				next.set("complexSelect", true);
+				next.set("filterTarget", function (card, player, target) {
+					if (target != _status.event.sourcex && !ui.selected.targets.includes(_status.event.sourcex)) {
+						return false;
+					}
+					return lib.filter.filterTarget.apply(this, arguments);
+				});
+				next.set("sourcex", target);
+				next.set("addCount", false);
+				next.set("logSkill", event.name);
+				await next;
 			},
 		},
 		zhangba_skill: {
@@ -4640,377 +4646,6 @@ export default {
 				},
 			],
 		},
-		/*
-			_wuxie:{
-				trigger:{player:['useCardToBegin','phaseJudge']},
-				priority:5,
-				popup:false,
-				forced:true,
-				filter:function(event,player){
-					if(event.card.storage&&event.card.storage.nowuxie) return false;
-					var card=event.card;
-					if(event.name=='phaseJudge'&&card.viewAs) card={name:card.viewAs};
-					var info=get.info(card);
-					if(info.wuxieable===false) return false;
-					if(event.name!='phaseJudge'){
-						if(event.getParent().nowuxie) return false;
-						if(!event.target){
-							if(info.wuxieable) return true;
-							return false;
-						}
-						if(event.player.hasSkillTag('playernowuxie',false,event.card)) return false;
-						if(get.type(event.card)!='trick'&&!info.wuxieable) return false;
-					}
-					return true;
-				},
-				forceLoad:true,
-				content:function(){
-					'step 0'
-					delete event.wuxieresult;
-					delete event.wuxieresult2;
-					if(trigger.multitarget){
-						event.targets=trigger.targets;
-					}
-					event.target=trigger.target;
-					if(event.triggername=='phaseJudge'){
-						event.target=trigger.player;
-					}
-					event.sourcex=event.targets||event.target;
-					if(!event.targets&&trigger.targets&&trigger.targets.length==1){
-						event.sourcex2=trigger.player;
-					}
-					event.source=trigger.player;
-					if(event.state==undefined) event.state=true;
-					event.card=trigger.card;
-					event._global_waiting=true;
-					event.tempnowuxie=(trigger.targets&&trigger.targets.length>1&&!trigger.multitarget);
-					event.filterCard=function(card,player){
-						if(get.name(card)!='wuxie') return false;
-						return lib.filter.cardEnabled(card,player,'forceEnable');
-					};
-					event.send=function(player,state,isJudge,card,source,target,targets,id,id2,tempnowuxie,skillState,respondInfo){
-						if(skillState){
-							player.applySkills(skillState);
-						}
-						state=state?1:-1;
-						var str='';
-						if(isJudge){
-							str+=get.translation(source)+'的';
-						}
-						if(isJudge){
-							str+=get.translation(card,'viewAs');
-						}
-						else{
-							str+=get.translation(card);
-						}
-						if((targets||target)&&!isJudge){
-							str+='对'+get.translation(targets||target);
-						}
-						str+='将'+(state>0?'生效':'失效')+'，是否无懈？';
-
-						if(player.isUnderControl(true)&&!_status.auto&&!ui.tempnowuxie&&tempnowuxie){
-							var translation=get.translation(card.name);
-							if(translation.length>=4){
-								translation=lib.translate[card.name+'_ab']||translation.slice(0,2);
-							}
-							ui.tempnowuxie=ui.create.control('不无懈'+translation,ui.click.tempnowuxie,'stayleft');
-							ui.tempnowuxie._origin=id2;
-						}
-						var next=player.chooseToUse({
-							filterCard:function(card,player){
-								if(get.name(card)!='wuxie') return false;
-								return lib.filter.cardEnabled(card,player,'forceEnable');
-							},
-							prompt:str,
-							type:'wuxie',
-							state:state,
-							_global_waiting:true,
-							ai1:function(){
-								if(isJudge){
-									var name=card.viewAs||card.name;
-									var info=lib.card[name];
-									if(info&&info.ai&&info.ai.wuxie){
-										var aiii=info.ai.wuxie(source,card,source,_status.event.player,state);
-										if(typeof aiii=='number') return aiii;
-									}
-									if(Math.abs(get.attitude(_status.event.player,source))<3) return 0;
-									if(source.hasSkillTag('nowuxie_judge')||source.hasSkillTag('guanxing')&&(source!=player||!source.hasSkill('guanxing_fail'))) return 0;
-									if(name!='lebu'&&name!='bingliang'){
-										if(source!=_status.event.player){
-											return 0;
-										}
-									}
-									var card2;
-									if(name!=card.name){
-										card2={name:name};
-									}
-									else{
-										card2=card;
-									}
-									var eff=get.effect(source,card2,source,source);
-									if(eff>=0) return 0;
-									return state*get.attitude(_status.event.player,source);
-								}
-								else if(target){
-									var triggerevent=_status.event.getTrigger();
-									if(triggerevent&&triggerevent.parent&&
-										triggerevent.parent.postAi&&
-										triggerevent.player.isUnknown(_status.event.player)){
-										return 0;
-									}
-									var info=get.info(card);
-									if(info.ai&&info.ai.wuxie){
-										var aiii=info.ai.wuxie(target,card,source,_status.event.player,state);
-										if(typeof aiii=='number') return aiii;
-									}
-									if(info.multitarget&&targets){
-										var eff=0;
-										for(var i=0;i<targets.length;i++){
-											eff+=get.effect(targets[i],card,source,_status.event.player)
-										}
-										return -eff*state;
-									}
-									if(Math.abs(get.attitude(_status.event.player,target))<3) return 0;
-									return -get.effect(target,card,source,_status.event.player)*state;
-								}
-								else{
-									var triggerevent=_status.event.getTrigger();
-									if(triggerevent&&triggerevent.parent&&
-										triggerevent.parent.postAi&&
-										triggerevent.player.isUnknown(_status.event.player)){
-										return 0;
-									}
-									var info=get.info(card);
-									if(info.ai&&info.ai.wuxie){
-										var aiii=info.ai.wuxie(target,card,source,_status.event.player,state);
-										if(typeof aiii=='number') return aiii;
-									}
-									if(Math.abs(get.attitude(_status.event.player,source))<3) return 0;
-									return -get.attitude(_status.event.player,source)*state;
-								}
-							},
-							source:target,
-							source2:targets,
-							id:id,
-							id2:id2,
-							respondInfo:respondInfo,
-						});
-						if(event.stateplayer&&event.statecard) next.set('respondTo',[event.stateplayer,event.statecard]);
-						else if(!isJudge){
-							next.set('respondTo',[source,card]);
-						}
-						if(game.online){
-							_status.event._resultid=id;
-							game.resume();
-						}
-						else{
-							next.nouse=true;
-						}
-					};
-					event.settle=function(){
-						if(event.respondWuxie) event.trigger('eventNeutralized');
-						if(!event.state){
-							if(event.triggername=='phaseJudge'){
-								trigger.untrigger();
-								trigger.cancelled=true;
-							}
-							else{
-								trigger.neutralize();
-								if(event.guowuxie==true){
-									trigger.getParent().excluded.addArray(game.filterPlayer(function(current){
-										return current.isFriendOf(trigger.target);
-									}));
-								}
-							}
-						}
-						event.finish();
-					};
-					'step 1'
-					var info={};
-					if(event.statecard){
-						info.player=event.stateplayer;
-						info.card=event.statecard;
-					}
-					else if(event.triggername=='phaseJudge'){
-						info.card=trigger.card;
-						info.target=trigger.player;
-					}
-					else{
-						info.player=trigger.player;
-						info.card=trigger.card;
-						if(trigger.multitarget){
-							info.targets=trigger.targets;
-						}
-						else info.target=trigger.target;
-					}
-					event.respond_info=info;
-					var list=game.filterPlayer(function(current){
-						if(event.nowuxie) return false;
-						if(event.directHit&&event.directHit.includes(current)) return false;
-						if(event.triggername=='phaseJudge'){
-							if(game.checkMod(trigger.card,player,current,'unchanged','wuxieJudgeEnabled',current)==false) return false;
-							if(game.checkMod(trigger.card,player,current,'unchanged','wuxieJudgeRespondable',player)==false) return false;
-							if(event.stateplayer&&event.statecard&&(game.checkMod(event.statecard,event.stateplayer,player,current,'unchanged','wuxieRespondable',event.stateplayer)==false)) return false;
-						}
-						else{
-							if(!event.statecard&&trigger.getParent().directHit.includes(current)) return false;
-							if(game.checkMod(trigger.card,player,trigger.target,current,'unchanged','wuxieEnabled',current)==false) return false;
-							if(game.checkMod(trigger.card,player,trigger.target,current,'unchanged','wuxieRespondable',player)==false) return false;
-							if(event.stateplayer&&event.statecard&&(game.checkMod(event.statecard,event.stateplayer,trigger.player,current,'unchanged','wuxieRespondable',event.stateplayer)==false)) return false;
-						}
-						return current.hasWuxie(info);
-					});
-					event.list=list;
-					event.id=get.id();
-					list.sort(function(a,b){
-						return get.distance(event.source,a,'absolute')-get.distance(event.source,b,'absolute');
-					});
-					'step 2'
-					if(event.list.length==0){
-						event.settle();
-					}
-					else if(_status.connectMode&&(event.list[0].isOnline()||event.list[0]==game.me)){
-						event.goto(4);
-					}
-					else{
-						event.current=event.list.shift();
-						event.send(event.current,event.state,event.triggername=='phaseJudge',
-						event.card,event.source,event.target,event.targets,event.id,trigger.parent.id,event.tempnowuxie,null,event.respond_info);
-					}
-					'step 3'
-					if(result.bool){
-						event.wuxieresult=event.current;
-						event.wuxieresult2=result;
-						event.goto(8);
-					}
-					else{
-						event.goto(2);
-					}
-					'step 4'
-					var id=event.id;
-					var sendback=function(result,player){
-						if(result&&result.id==id&&!event.wuxieresult&&result.bool){
-							event.wuxieresult=player;
-							event.wuxieresult2=result;
-							game.broadcast('cancel',id);
-							return (function(){
-								if(_status.event.id==id&&_status.event.name=='chooseToUse'&&_status.paused) event.resultOL=_status.event.resultOL;
-								if(_status.event._parent_id==id){
-									ui.click.cancel();
-								}
-								if(_status.event.id==id){
-									if(_status.event._backup) ui.click.cancel();
-									ui.click.cancel();
-									if(ui.confirm){
-										ui.confirm.close();
-									}
-									if(_status.event.result){
-										_status.event.result.id=id;
-									}
-								}
-							});
-						}
-						else{
-							if(_status.event.id==id&&_status.event.name=='chooseToUse'&&_status.paused){
-								return (function(){
-									event.resultOL=_status.event.resultOL;
-								});
-							}
-						}
-					};
-					var withme=false;
-					var withol=false;
-					var list=event.list;
-					for(var i=0;i<list.length;i++){
-						if(list[i].isOnline()){
-							withol=true;
-							list[i].wait(sendback);
-							list[i].send(event.send,list[i],event.state,event.triggername=='phaseJudge',
-							event.card,event.source,event.target,event.targets,event.id,trigger.parent.id,event.tempnowuxie,get.skillState(list[i]),event.respond_info);
-							list.splice(i--,1);
-						}
-						else if(list[i]==game.me){
-							withme=true;
-							event.send(list[i],event.state,event.triggername=='phaseJudge',
-							event.card,event.source,event.target,event.targets,event.id,trigger.parent.id,event.tempnowuxie,null,respondInfo);
-							list.splice(i--,1);
-						}
-					}
-					if(!withme){
-						event.goto(6);
-					}
-					if(_status.connectMode){
-						if(withme||withol){
-							for(var i=0;i<game.players.length;i++){
-								game.players[i].showTimer();
-							}
-						}
-					}
-					event.withol=withol;
-					'step 5'
-					if(result&&result.bool&&!event.wuxieresult){
-						game.broadcast('cancel',event.id);
-						event.wuxieresult=game.me;
-						event.wuxieresult2=result;
-					}
-					'step 6'
-					if(event.withol&&!event.resultOL){
-						game.pause();
-					}
-					'step 7'
-					for(var i=0;i<game.players.length;i++){
-						game.players[i].hideTimer();
-					}
-					'step 8'
-					if(event.wuxieresult2&&event.wuxieresult2._sendskill) lib.skill[event.wuxieresult2._sendskill[0]]=event.wuxieresult2._sendskill[1];
-					if(event.wuxieresult&&event.wuxieresult2&&event.wuxieresult2.skill){
-						var info=get.info(event.wuxieresult2.skill);
-						if(info&&info.precontent&&!game.online){
-							var next=game.createEvent('pre_'+event.wuxieresult2);
-							next.setContent(info.precontent);
-							next.set('result',event.wuxieresult2);
-							next.set('player',event.wuxieresult);
-						}
-					}
-					'step 9'
-					if(event.wuxieresult){
-						var next=event.wuxieresult.useResult(event.wuxieresult2);
-						if(event.stateplayer&&event.statecard){
-							event.respondWuxie=true;
-							next.respondTo=[event.stateplayer,event.statecard];
-						}
-						else if(event.triggername!='phaseJudge'){
-							next.respondTo=[trigger.player,trigger.card];
-						}
-					}
-					'step 10'
-					if(event.wuxieresult){
-						if(result.wuxied){
-							event.nowuxie=result.nowuxie;
-							event.directHit=result.directHit;
-							event.stateplayer=event.wuxieresult;
-							if(event.wuxieresult2&&event.wuxieresult2.used){
-								event.statecard=event.wuxieresult2.used;
-							}
-							else{
-								event.statecard=true;
-							}
-							event.state=!event.state;
-							event.goto(1);
-						}
-						else event.settle();
-					}
-					else if(event.list.length){
-						event.goto(2);
-					}
-					else{
-						event.settle();
-					}
-					delete event.resultOL;
-					delete event.wuxieresult;
-					delete event.wuxieresult2;
-				}
-			},*/
 	},
 	translate: {
 		sha: "杀",

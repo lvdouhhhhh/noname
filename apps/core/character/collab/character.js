@@ -1,4 +1,57 @@
 const characters = {
+	ggbond: {
+		sex: "male",
+		group: "qun",
+		hp: 4,
+		skills: ["tangguo", "kangzhang"],
+		names: "null|null",
+	},
+	feifeigongzhu: {
+		sex: "female",
+		group: "qun",
+		hp: 4,
+		skills: ["conghui", "wubang"],
+		names: "null|null",
+	},
+	ol_chitu: {
+		sex: "female",
+		group: "shu",
+		hp: 4,
+		skills: ["olfangma", "oljingxian"],
+		names: "null|null",
+	},
+	ol_le_menghuo: {
+		sex: "male",
+		group: "shu",
+		hp: 4,
+		skills: ["oljunzhu", "olrehuanshi"],
+		groupBorder: "qun",
+	},
+	ol_niuma: {
+		sex: "male",
+		group: "shen",
+		hp: 4,
+		skills: ["oldianbu", "oljuhun"],
+		names: "null|null-null|null",
+	},
+	xiangxue_liushan: {
+		sex: "male",
+		group: "shu",
+		hp: 3,
+		skills: ["xiangxue", "zhiyong"],
+	},
+	haoxue_lvmeng: {
+		sex: "male",
+		group: "wu",
+		hp: 4,
+		skills: ["haoxue", "qiongshe"],
+	},
+	boxue_caochong: {
+		sex: "male",
+		group: "wei",
+		hp: 3,
+		skills: ["boxue", "zhizhong"],
+	},
 	natu_guanyu: {
 		sex: "male",
 		group: "shu",
@@ -11,6 +64,7 @@ const characters = {
 		hp: 3,
 		skills: ["natuxing", "natufu"],
 		names: "诸葛|亮",
+		clans: ["琅琊诸葛氏"],
 	},
 	natu_zhaoyun: {
 		sex: "male",
@@ -31,6 +85,12 @@ const characters = {
 		hp: 4,
 		skills: ["twjuyan", "twlihuo", "yingjian", "yiran"],
 	},
+	tw_dm_zhangliang: {
+		sex: "male",
+		group: "qun",
+		hp: 4,
+		skills: ["twrenfang", "twjuemie", "twjianming", "relonghun"],
+	},
 	ol_re_nianshou: {
 		sex: "male",
 		group: "qun",
@@ -43,6 +103,7 @@ const characters = {
 		hp: 3,
 		skills: ["oljiangwu", "olxinghan"],
 		names: "诸葛|亮",
+		clans: ["琅琊诸葛氏"],
 	},
 	meituizhishen: {
 		sex: "male",
@@ -499,7 +560,6 @@ const characters = {
 		group: "qun",
 		hp: 4,
 		skills: ["oldingxi", "olnengchen", "olhuojie"],
-		img: "image/character/jsrg_caocao.jpg",
 	},
 	jiangziya: {
 		sex: "male",

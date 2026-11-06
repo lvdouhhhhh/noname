@@ -1007,7 +1007,9 @@ const skills = {
 			const target = event.target,
 				targets = [player].concat(
 					(() => {
-						return get.mode() === "identity" ? [] : player.getFriends();
+						//return get.mode() === "identity" ? [] : player.getFriends();
+						//终于没有若为了
+						return [];
 					})()
 				);
 			//生成dialog
@@ -1180,12 +1182,9 @@ const skills = {
 					})
 					.forResult();
 				if (!result?.cards?.length || result.cards[0] === card) {
+					player.logSkill("mbsaojian", null, null, null, [3]);
 					break;
 				}
-			}
-			if (target.countCards("h") > player.countCards("h")) {
-				player.logSkill("mbsaojian", null, null, null, [3]);
-				await player.loseHp();
 			}
 		},
 		chooseCard(player, eventId, videoId, source) {
@@ -1582,12 +1581,12 @@ const skills = {
 				onremove: true,
 				mod: {
 					cardSavable: (card, player) => {
-						if (player.getStorage("jsrgzonghai_blocker").includes(get.event().getParent()._jsrgzonghai_id)) {
+						if (player.getStorage("jsrgzonghai_blocker").includes(get.event().getParent("dying", false, true)._jsrgzonghai_id)) {
 							return false;
 						}
 					},
 					cardEnabled: (card, player) => {
-						if (player.getStorage("jsrgzonghai_blocker").includes(get.event().getParent()._jsrgzonghai_id)) {
+						if (player.getStorage("jsrgzonghai_blocker").includes(get.event().getParent("dying", false, true)._jsrgzonghai_id)) {
 							return false;
 						}
 					},
@@ -4637,7 +4636,11 @@ const skills = {
 						})
 						.join("\n");
 					if (lib.skill.jsrgzhenfeng.getInclusion(str, card)) {
-						eff += get.damageEffect(player, player, player);
+						let num = 1;
+						if (player.getHp() + player.hujia <= 1) {
+							num++;
+						}
+						eff += get.damageEffect(player, player, player) * num;
 					}
 				}
 				return eff;
@@ -6480,7 +6483,7 @@ const skills = {
 				},
 				silent: true,
 				forceDie: true,
-				content: () => {
+				async content(event, trigger, player) {
 					game.removeGlobalSkill("jsrgjiemeng_effect");
 				},
 			},
@@ -9153,7 +9156,7 @@ const skills = {
 				.set("logSkill", "jsrgfeiyang")
 				.set("ai", function (card) {
 					if (_status.event.goon) {
-						return 6 - get.value(card);
+						return 9 - get.value(card);
 					}
 					return 0;
 				})
@@ -9161,6 +9164,9 @@ const skills = {
 					"goon",
 					(() => {
 						if (player.hasSkillTag("rejudge") && player.countCards("j") < 2) {
+							return false;
+						}
+						if (player.hasSkill("dckanyu", null, false, false) && !player.hasCards("j", card => card.name == "lebu")) {
 							return false;
 						}
 						return player.hasCard(function (card) {
@@ -9462,20 +9468,6 @@ const skills = {
 			if (trigger.target.countDiscardableCards(player, "he")) {
 				await player.discardPlayerCard("平讨：弃置" + get.translation(trigger.target) + get.cnNumber(num) + "张牌", num, "he", trigger.target, true);
 			}
-
-			/*
-			else event.finish();
-			'step 2'
-			if(player.isMinHandcard()||player.isMinHp()){
-				let id=trigger.target.playerid;
-				let map=trigger.getParent().customArgs;
-				if(!map[id]) map[id]={};
-				if(typeof map[id].extraDamage!='number'){
-					map[id].extraDamage=0;
-				}
-				map[id].extraDamage++;
-			}
-			*/
 		},
 		ai: {
 			unequip_ai: true,

@@ -372,19 +372,22 @@ const skills = {
 			} = event;
 			const { name } = trigger.card;
 			const { bool } = await target
-				.chooseToDiscard("he", { name: name }, "弃置一张【" + get.translation(name) + "】或受到1点伤害")
-				.set("ai", card => {
-					const { player, take } = get.event();
-					if (take || (get.name(card) == "tao" && !player.hasJudge("lebu"))) {
-						return 0;
-					}
-					return 8 - get.value(card);
+				.chooseToDiscard({
+					prompt: "弃置一张【" + get.translation(name) + "】或受到1点伤害",
+					filterCard(card, player) {
+						return get.name(card) === get.event().namex;
+					},
+					position: "he",
+					ai(card) {
+						const { player, take } = get.event();
+						if (take || (get.name(card) == "tao" && !player.hasJudge("lebu"))) return 0;
+						return 8 - get.value(card);
+					},
+					namex: name,
+					take: get.damageEffect(target, player, target) >= 0,
 				})
-				.set("take", get.damageEffect(target, player, target) >= 0)
 				.forResult();
-			if (!bool) {
-				await target.damage();
-			}
+			if (!bool) await target.damage();
 		},
 	},
 	yidu: {
@@ -556,36 +559,19 @@ const skills = {
 					return player.hasExpansions("xinwanyi");
 				},
 				async content(event, trigger, player) {
-					const result = await player
-						.chooseTarget({
-							prompt: "婉嫕：令一名角色获得一张“嫕”",
-							forced: true,
-							ai(target) {
-								const player = get.player();
-								get.attitude(player, target);
-							},
-						})
-						.forResult();
-					if (!result.bool || !result.targets?.length) {
-						return;
-					}
-					const [target] = result.targets;
-					player.line(target, "green");
 					const cards = player.getExpansions("xinwanyi");
-					if (cards.length === 1) {
-						await player.give(cards, target, true);
-						return;
-					}
-					const result2 = await player
-						.chooseButton({
-							createDialog: [`令${get.translation(target)}获得一张“嫕”`, cards],
-							forced: true,
+					const result = await player
+						.chooseButtonTarget({
+							createDialog: ["婉嫕：令一名角色获得一张“嫕”", cards],
+							ai1: button => get.buttonValue(button),
+							ai2: target => get.attitude(get.player(), target),
 						})
 						.forResult();
-					if (!result2.bool || !result2.links?.length) {
-						return;
+					if (result?.bool && result.targets?.length && result.links?.length) {
+						const target = result.targets[0];
+						player.line(target);
+						await player.give(result.links, target, true);
 					}
-					await player.give(result2.links, target, true);
 				},
 			},
 		},
@@ -1495,11 +1481,7 @@ const skills = {
 			const cards = trigger.cards.filterInD();
 			target.storage.maihuo_target = player;
 			target.addSkill("maihuo_effect");
-			await target.addToExpansion({
-				cards,
-				animate: "gain2",
-				gaintag: ["maihuo_effect"],
-			});
+			await target.addToExpansion({ cards, animate: "gain2", gaintag: ["maihuo_effect"] });
 		},
 		group: "maihuo_damage",
 		subSkill: {
@@ -1508,28 +1490,18 @@ const skills = {
 				forced: true,
 				charlotte: true,
 				filter(event, player) {
-					return player.getExpansions("maihuo_effect").length > 0;
+					return player.hasExpansions("maihuo_effect");
 				},
 				async content(event, trigger, player) {
 					const cards = player.getExpansions("maihuo_effect");
 					let card = cards[0];
 					if (card.name !== "sha") {
-						card = get.autoViewAs(
-							{
-								name: "sha",
-								isCard: true,
-							},
-							cards
-						);
+						card = get.autoViewAs({ name: "sha", isCard: true }, cards);
 					}
 					const target = player.storage.maihuo_target;
 					player.removeSkill("maihuo_effect");
-					if (target.isIn() && player.canUse(card, target, null, true)) {
-						await player.useCard({
-							card,
-							cards,
-							targets: [target],
-						});
+					if (target.isIn() && player.canUse(card, target, void 0, true)) {
+						await player.useCard({ card, cards, targets: [target] });
 					}
 				},
 				marktext: "祸",
@@ -1546,11 +1518,12 @@ const skills = {
 				ai: { threaten: 1.05 },
 			},
 			damage: {
+				audio: "maihuo",
 				trigger: { source: "damageSource" },
 				forced: true,
 				locked: false,
 				filter(event, player) {
-					return event.player.hasSkill("maihuo_effect") && event.player.getExpansions("maihuo_effect").length > 0;
+					return event.player.hasSkill("maihuo_effect") && event.player.hasExpansions("maihuo_effect");
 				},
 				async content(event, trigger, player) {
 					trigger.player.removeSkill("maihuo_effect");

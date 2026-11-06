@@ -972,7 +972,7 @@ export class Create {
 					game
 						.createEvent("giveup", false)
 						.set("includeOut", true)
-						.setContent(function () {
+						.setContent(async (event, trigger, player) => {
 							game.log(player, "投降");
 							player.popup("投降");
 							player.die("nosource").set("_triggered", null).includeOut = true;
@@ -2690,6 +2690,9 @@ export class Create {
 			}
 		}
 		ui.volumn = ui.create.system("♫");
+		if (lib.device === "ios") {
+			ui.volumn.style.display = "none";
+		}
 		lib.setPopped(ui.volumn, ui.click.volumn, 200);
 		// if(lib.config.show_pause) ui.auto.style.marginLeft='10px';
 		if (!lib.config.show_volumn) {
@@ -4010,8 +4013,8 @@ export class Create {
 				buttons.forEach((button, index) => {
 					button.style.setProperty("margin-right", marginRight);
 					if (isShrink) {
-						button.node.info.style.setProperty("transform", "translateX(-52px) translateY(-3px)", "important");
-						button.node.name.style.setProperty("transform", "translateY(14px)", "important");
+						button.node.info.style.setProperty("transform", "translateX(-52px) translateY(-3px)");
+						button.node.name.style.setProperty("transform", "translateY(14px)");
 					}
 					const card = cards[index];
 					if (get.name(card) !== card.name || !get.is.sameNature(get.nature(card), card.nature, true)) {
