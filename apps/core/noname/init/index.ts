@@ -42,7 +42,7 @@ export async function boot() {
 	await loadConfig();
 
 	// One-time Pages migration: install the bundled UI extensions and reset only their visible settings.
-	const pagesDefaultsVersion = "noname_pub_handkill_defaults_v1";
+	const pagesDefaultsVersion = "noname_pub_handkill_defaults_v2";
 	if (!config.get(pagesDefaultsVersion)) {
 		const extensions = new Set(Array.isArray(config.get("extensions")) ? config.get("extensions") : []);
 		extensions.add("手杀ui");
@@ -54,15 +54,15 @@ export async function boot() {
 		const settings = {
 			extension_手杀ui_enable: true,
 			extension_十周年UI_enable: true,
-			extension_十周年UI_newDecadeStyle: "on",
+			extension_十周年UI_newDecadeStyle: "off",
 			extension_十周年UI_outcropSkin: "off",
 			extension_十周年UI_borderStyle: "xinsha",
 			extension_十周年UI_borderLevel: "five",
 			extension_十周年UI_aloneEquip: true,
-			extension_十周年UI_meanPrettify: false,
-			extension_十周年UI_dynamicSkin: false,
-			extension_十周年UI_dynamicSkinOutcrop: false,
-			dynamicSkin: false,
+			extension_十周年UI_meanPrettify: true,
+			extension_十周年UI_dynamicSkin: true,
+			extension_十周年UI_dynamicSkinOutcrop: true,
+			dynamicSkin: true,
 			extension_十周年UI_killEffect: true,
 			extension_十周年UI_cardGhostEffect: true,
 			extension_十周年UI_autoSelect: true,
