@@ -41,6 +41,47 @@ export async function boot() {
 
 	await loadConfig();
 
+	// One-time Pages migration: install the bundled UI extensions and reset only their visible settings.
+	const pagesDefaultsVersion = "noname_pub_handkill_defaults_v1";
+	if (!config.get(pagesDefaultsVersion)) {
+		const extensions = new Set(Array.isArray(config.get("extensions")) ? config.get("extensions") : []);
+		extensions.add("手杀ui");
+		extensions.add("十周年UI");
+		const extensionList = [...extensions];
+		config.set("extensions", extensionList);
+		await game.promises.saveConfig("extensions", extensionList);
+
+		const settings = {
+			extension_手杀ui_enable: true,
+			extension_十周年UI_enable: true,
+			extension_十周年UI_newDecadeStyle: "on",
+			extension_十周年UI_outcropSkin: "off",
+			extension_十周年UI_borderStyle: "xinsha",
+			extension_十周年UI_borderLevel: "five",
+			extension_十周年UI_aloneEquip: true,
+			extension_十周年UI_meanPrettify: false,
+			extension_十周年UI_dynamicSkin: false,
+			extension_十周年UI_dynamicSkinOutcrop: false,
+			dynamicSkin: false,
+			extension_十周年UI_killEffect: true,
+			extension_十周年UI_cardGhostEffect: true,
+			extension_十周年UI_autoSelect: true,
+			extension_十周年UI_cardPrompt: true,
+			auto_confirm: false,
+		};
+		for (const [key, value] of Object.entries(settings)) {
+			config.set(key, value);
+			await game.promises.saveConfig(key, value);
+		}
+
+		if (!config.get("image_background") || config.get("image_background") === "default") {
+			config.set("image_background", "ol_bg");
+			await game.promises.saveConfig("image_background", "ol_bg");
+		}
+		config.set(pagesDefaultsVersion, true);
+		await game.promises.saveConfig(pagesDefaultsVersion, true);
+	}
+
 	// 兼容原有鏖战布尔设置，保持原规则并正确显示新的选择菜单。
 	for (const mode of ["guozhan", "connect"]) {
 		const settings = lib.config.mode_config[mode];
