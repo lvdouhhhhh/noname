@@ -87,6 +87,11 @@ function syncRecastingButton(confirm = ui.confirm) {
 		button.dataset.recastingClickInstalled = "true";
 	}
 	recastingButton = button;
+	// The skill panel calculates its width before this custom button is added.
+	// Recalculate after insertion or an empty panel remains width: 0 and clips it.
+	if (parent === ui.skillControl?.node?.enable && typeof ui.skillControl.update === "function") {
+		ui.skillControl.update();
+	}
 }
 
 function installSkillControlInstanceHook() {
@@ -97,7 +102,7 @@ function installSkillControlInstanceHook() {
 		const result = original.apply(this, args);
 		const button = this.node?.enable?.querySelector('[data-id="_recasting"]');
 		if (button) {
-			const visible = lib.config.extension_十周年UI_enableRecastInteraction !== false && isInUsePhase(_status.event, game.me);
+			const visible = canShowRecastButton();
 			button.classList.toggle("usable", visible);
 			button.style.display = visible ? "inline-flex" : "none";
 		}
