@@ -3,6 +3,7 @@ import { game, lib, ui, _status } from "noname";
 let recastingButton = null;
 let updateHookInstalled = false;
 let gameHooksInstalled = false;
+const controlUpdateHooks = new WeakSet();
 
 function isInUsePhase(event, player) {
 	for (let current = event; current; current = current.parent) {
@@ -32,9 +33,9 @@ function hasRecastableCard(player, event) {
 
 function canShowRecastButton() {
 	const event = _status.event;
-	const player = event?.player || game.me;
+	const player = game.me;
 	if (lib.config.extension_十周年UI_enableRecastInteraction === false) return false;
-	if (!event || !player || player !== game.me || event.name === "_recasting" || event.skill === "_recasting") return false;
+	if (!event || !player || event.name === "_recasting" || event.skill === "_recasting") return false;
 	return isInUsePhase(event, player) && hasRecastableCard(player, event);
 }
 
@@ -44,24 +45,23 @@ function getButtonParent(confirm) {
 }
 
 function syncRecastingButton(confirm = ui.confirm) {
+	const parent = getButtonParent(confirm);
+	const existingButton = parent?.querySelector('[data-id="_recasting"]');
 	if (!canShowRecastButton()) {
 		recastingButton?.remove();
 		recastingButton = null;
+		if (existingButton) existingButton.style.display = "none";
 		return;
 	}
-	const parent = getButtonParent(confirm);
 	if (!parent) return;
-	if (parent.querySelector('[data-id="_recasting"]:not(.recasting-btn)')) {
-		recastingButton?.remove();
-		recastingButton = null;
-		return;
+	if (recastingButton && recastingButton.parentNode !== parent) recastingButton.remove();
+	let button = recastingButton?.parentNode === parent ? recastingButton : existingButton;
+	if (!button) {
+		button = document.createElement("div");
+		parent.appendChild(button);
 	}
-	if (recastingButton?.parentNode === parent) return;
-	recastingButton?.remove();
-
-	const button = document.createElement("div");
 	button.link = "_recasting";
-	button.className = "skillitem enable-skill recasting-btn";
+	button.classList.add("skillitem", "enable-skill", "recasting-btn", "usable");
 	button.dataset.id = "_recasting";
 	button.dataset.type = "skill2";
 	button.title = "重铸";
@@ -70,19 +70,40 @@ function syncRecastingButton(confirm = ui.confirm) {
 	button.style.backgroundImage = `url('${lib.assetURL}extension/十周年UI/ui/assets/lbtn/uibutton/game_btn_bg2.png')`;
 	button.style.backgroundSize = "100% 100%";
 	button.style.display = "inline-flex";
+	button.style.width = "52px";
+	button.style.height = "32px";
 	button.style.alignItems = "center";
 	button.style.justifyContent = "center";
 	button.style.flex = "0 0 auto";
 	button.style.padding = "0";
 	button.querySelector("img").style.cssText = "width:72%;height:72%;object-fit:contain;pointer-events:none;";
-	button.addEventListener(lib.config.touchscreen ? "touchend" : "click", function (event) {
-		event.stopPropagation();
-		if (!canShowRecastButton()) return;
-		ui.click.skill(this.link);
-		ui.updateSkillControl?.(game.me, true);
-	});
-	parent.appendChild(button);
+	if (!button.dataset.recastingClickInstalled) {
+		button.addEventListener(lib.config.touchscreen ? "touchend" : "click", function (event) {
+			event.stopImmediatePropagation();
+			if (!canShowRecastButton()) return;
+			ui.click.skill("_recasting");
+			ui.updateSkillControl?.(game.me, true);
+		});
+		button.dataset.recastingClickInstalled = "true";
+	}
 	recastingButton = button;
+}
+
+function installSkillControlInstanceHook() {
+	const control = ui.skillControl;
+	if (!control || typeof control.update !== "function" || controlUpdateHooks.has(control)) return;
+	const original = control.update;
+	control.update = function (...args) {
+		const result = original.apply(this, args);
+		const button = this.node?.enable?.querySelector('[data-id="_recasting"]');
+		if (button) {
+			const visible = lib.config.extension_十周年UI_enableRecastInteraction !== false && isInUsePhase(_status.event, game.me);
+			button.classList.toggle("usable", visible);
+			button.style.display = visible ? "inline-flex" : "none";
+		}
+		return result;
+	};
+	controlUpdateHooks.add(control);
 }
 
 function installSkillControlUpdateHook() {
@@ -90,6 +111,7 @@ function installSkillControlUpdateHook() {
 	const original = ui.updateSkillControl;
 	ui.updateSkillControl = function (...args) {
 		const result = original.apply(this, args);
+		installSkillControlInstanceHook();
 		const schedule = window.requestAnimationFrame || (callback => window.setTimeout(callback, 0));
 		schedule(() => syncRecastingButton());
 		return result;
@@ -101,6 +123,7 @@ function installGameHooks() {
 	if (gameHooksInstalled) return;
 	const update = () => {
 		installSkillControlUpdateHook();
+		installSkillControlInstanceHook();
 		syncRecastingButton();
 	};
 	let installed = false;
@@ -118,5 +141,6 @@ function installGameHooks() {
 export function updateRecastingButton(confirm) {
 	installGameHooks();
 	installSkillControlUpdateHook();
+	installSkillControlInstanceHook();
 	syncRecastingButton(confirm);
 }
