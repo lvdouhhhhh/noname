@@ -457,6 +457,7 @@ export function createBaseLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 
 		// 确认对话框重写
 		initConfirmRewrite() {
+			updateRecastingButton(null);
 			const self = this;
 			ui.create.confirm = (str, func) => {
 				if (ui.confirm?.classList.contains("closing")) {

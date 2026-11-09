@@ -171,6 +171,7 @@ export function createOnlineLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 
 		// 初始化确认按钮覆写
 		initConfirmRewrite() {
+			updateRecastingButton(null);
 			const self = this;
 			ui.create.confirm = function (str, func) {
 				if (ui.confirm?.classList.contains("closing")) {
