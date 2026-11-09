@@ -762,12 +762,15 @@ export function createShoushaLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 				const recastingSkills = ui.skills2?.skills?.filter(skill => skill === "_recasting") || [];
 				const currentEvent = _status.event;
 				const currentPlayer = currentEvent?.player || game.me;
-				// The core closes ui.skills2 after a card is selected, so recover the recast skill from the active event.
+				// _recasting is a hidden core action, so filterEnable rejects it when it is not in the player's skill list.
+				// Check the core action's own filter to restore its button after the core closes ui.skills2.
 				if (
 					!recastingSkills.length &&
 					currentEvent &&
 					currentPlayer &&
-					lib.filter.filterEnable(currentEvent, currentPlayer, "_recasting")
+					currentPlayer === game.me &&
+					currentPlayer.isPhaseUsing?.(true) &&
+					lib.skill._recasting?.filter?.(currentEvent, currentPlayer)
 				) {
 					recastingSkills.push("_recasting");
 				}
