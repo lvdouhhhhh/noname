@@ -884,6 +884,37 @@
 	content: none !important;
 }
 
+/* Keep the remaining-use badge clear of the skill name. */
+#arena .skill-control .skillitem.has-skill-number > .numText,
+#arena .skill-controlzuoshou .skillitem.has-skill-number > .numText {
+	position: absolute !important;
+	top: -7px !important;
+	right: -6px !important;
+	z-index: 3 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	box-sizing: border-box !important;
+	min-width: 18px !important;
+	height: 18px !important;
+	padding: 0 4px !important;
+	border: 1px solid rgba(255, 231, 163, 0.9) !important;
+	border-radius: 10px !important;
+	background: rgba(32, 24, 15, 0.98) !important;
+	background-image: none !important;
+	background-clip: border-box !important;
+	color: #ffe68a !important;
+	-webkit-text-fill-color: #ffe68a !important;
+	-webkit-text-stroke: 0 !important;
+	font: 700 11px/1 "Microsoft YaHei", sans-serif !important;
+	text-shadow: 0 1px 2px #000 !important;
+}
+
+#arena .skill-control .skillitem.has-skill-number > .numText-child,
+#arena .skill-controlzuoshou .skillitem.has-skill-number > .numText-child {
+	display: none !important;
+}
+
 /* Keep every active skill visible when the game window is narrow. */
 @media (max-width: 1100px) {
 	#arena .skill-control,

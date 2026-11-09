@@ -251,6 +251,7 @@ export function createShoushaSkillPlugin(lib, game, ui, get, ai, _status, app) {
 			 */
 			addSkillNumber(node, num) {
 				const nums = ["", "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩", "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳"];
+				node.classList.add("has-skill-number");
 				const text = document.createElement("span");
 				text.classList.add("numText");
 				const child = document.createElement("span");
