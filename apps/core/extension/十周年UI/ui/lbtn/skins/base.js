@@ -5,6 +5,12 @@
 import { lib, game, ui, get, ai, _status } from "noname";
 import { updateRecastingButton } from "../recastButton.js";
 
+/** `lib.arenaReady` is deleted after the arena initializes, so late-loaded skins must run immediately. */
+export function addArenaReadyCallback(lib, callback) {
+	if (Array.isArray(lib.arenaReady)) lib.arenaReady.push(callback);
+	else callback();
+}
+
 /**
  * 创建基础lbtn插件
  */

@@ -3,7 +3,7 @@
  * 特点：新杀风格按钮布局、全选/反选按钮
  */
 import { lib, game, ui, get, ai, _status } from "noname";
-import { createBaseLbtnPlugin } from "./base.js";
+import { addArenaReadyCallback, createBaseLbtnPlugin } from "./base.js";
 
 export function createXinshaLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 	const base = createBaseLbtnPlugin(lib, game, ui, get, ai, _status, app);
@@ -39,7 +39,7 @@ export function createXinshaLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 
 		initArenaReady() {
 			const self = this;
-			lib.arenaReady.push(() => {
+			addArenaReadyCallback(lib, () => {
 				self.initRoundUpdate();
 
 				// 问号按钮
@@ -89,7 +89,7 @@ export function createXinshaLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 			};
 
 			if (ui.control) initObserver();
-			else lib.arenaReady?.push(initObserver);
+			else addArenaReadyCallback(lib, initObserver);
 		},
 
 		// 创建问号按钮

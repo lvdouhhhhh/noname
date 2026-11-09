@@ -3,7 +3,7 @@
  * 特点：十周年风格菜单、手牌整理、全选按钮
  */
 import { lib, game, ui, get, ai, _status } from "noname";
-import { createBaseLbtnPlugin } from "./base.js";
+import { addArenaReadyCallback, createBaseLbtnPlugin } from "./base.js";
 
 export function createShizhounianLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 	const base = createBaseLbtnPlugin(lib, game, ui, get, ai, _status, app);
@@ -38,7 +38,7 @@ export function createShizhounianLbtnPlugin(lib, game, ui, get, ai, _status, app
 
 		initArenaReady() {
 			const self = this;
-			lib.arenaReady.push(() => {
+			addArenaReadyCallback(lib, () => {
 				self.initRoundUpdate();
 
 				// 问号按钮

@@ -3,7 +3,7 @@
  * 特点：代号风格菜单、距离显示
  */
 import { lib, game, ui, get, ai, _status } from "noname";
-import { createBaseLbtnPlugin } from "./base.js";
+import { addArenaReadyCallback, createBaseLbtnPlugin } from "./base.js";
 
 export function createCodenameLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 	const base = createBaseLbtnPlugin(lib, game, ui, get, ai, _status, app);
@@ -38,7 +38,7 @@ export function createCodenameLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 
 		initArenaReady() {
 			const self = this;
-			lib.arenaReady.push(() => {
+			addArenaReadyCallback(lib, () => {
 				self.initRoundUpdate();
 				self.createSortButton();
 				self.createTopRightMenu();

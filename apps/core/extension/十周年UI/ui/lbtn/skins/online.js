@@ -3,7 +3,7 @@
  * 特点：OL风格菜单、身份任务、礼物系统、历史记录、计时器
  */
 import { lib, game, ui, get, ai, _status } from "noname";
-import { createBaseLbtnPlugin } from "./base.js";
+import { addArenaReadyCallback, createBaseLbtnPlugin } from "./base.js";
 import { updateRecastingButton } from "../recastButton.js";
 
 export function createOnlineLbtnPlugin(lib, game, ui, get, ai, _status, app) {
@@ -303,7 +303,7 @@ export function createOnlineLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 
 		initArenaReady() {
 			const self = this;
-			lib.arenaReady.push(() => {
+			addArenaReadyCallback(lib, () => {
 				self.initIdentityShow();
 				self.createMenuButton();
 				self.createBottomButtons();

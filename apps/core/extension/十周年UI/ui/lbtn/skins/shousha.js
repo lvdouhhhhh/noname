@@ -4,7 +4,7 @@
  * @version 2.0
  */
 import { _status } from "noname";
-import { createBaseLbtnPlugin } from "./base.js";
+import { addArenaReadyCallback, createBaseLbtnPlugin } from "./base.js";
 import { initChatSystem } from "../chatSystem.js";
 import { updateRecastingButton } from "../recastButton.js";
 
@@ -386,7 +386,7 @@ export function createShoushaLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 			if (lib.announce?.subscribe) {
 				lib.announce.subscribe("gameStart", () => setTimeout(showDistanceDisplay, 100));
 			} else {
-				lib.arenaReady.push(() => {
+				addArenaReadyCallback(lib, () => {
 					const checkAndShow = () => {
 						if (_status.gameStarted && game.players?.length > 0) {
 							setTimeout(showDistanceDisplay, 100);
@@ -462,7 +462,7 @@ export function createShoushaLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 		 */
 		initArenaReady() {
 			const self = this;
-			lib.arenaReady.push(() => {
+			addArenaReadyCallback(lib, () => {
 				self.initRoundUpdate();
 				self.createChatButton();
 

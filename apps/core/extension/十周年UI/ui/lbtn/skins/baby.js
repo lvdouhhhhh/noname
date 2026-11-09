@@ -3,7 +3,7 @@
  * 特点：简化按钮、宝宝杀风格菜单
  */
 import { lib, game, ui, get, ai, _status } from "noname";
-import { createBaseLbtnPlugin } from "./base.js";
+import { addArenaReadyCallback, createBaseLbtnPlugin } from "./base.js";
 
 export function createBabyLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 	const base = createBaseLbtnPlugin(lib, game, ui, get, ai, _status, app);
@@ -39,7 +39,7 @@ export function createBabyLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 
 		initArenaReady() {
 			const self = this;
-			lib.arenaReady.push(() => {
+			addArenaReadyCallback(lib, () => {
 				self.initRoundUpdate();
 				self.initPlayerNicknames();
 				self.createConfigButton();
@@ -108,7 +108,7 @@ export function createBabyLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 			};
 
 			if (ui.control) initObserver();
-			else lib.arenaReady?.push(initObserver);
+			else addArenaReadyCallback(lib, initObserver);
 		},
 
 		// 创建配置按钮
