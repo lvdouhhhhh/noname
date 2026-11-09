@@ -4,6 +4,7 @@
  */
 import { lib, game, ui, get, ai, _status } from "noname";
 import { createBaseLbtnPlugin } from "./base.js";
+import { updateRecastingButton } from "../recastButton.js";
 
 export function createOnlineLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 	const base = createBaseLbtnPlugin(lib, game, ui, get, ai, _status, app);
@@ -852,6 +853,7 @@ export function createOnlineLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 				}
 
 				confirm.update = function () {
+					updateRecastingButton(confirm);
 					if (confirm.skills2) {
 						if (_status.event.skill && _status.event.skill !== confirm.dataset.skill) {
 							confirm.dataset.skill = _status.event.skill;

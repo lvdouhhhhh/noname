@@ -3,6 +3,7 @@
  * 提供所有样式共用的基础功能
  */
 import { lib, game, ui, get, ai, _status } from "noname";
+import { updateRecastingButton } from "../recastButton.js";
 
 /**
  * 创建基础lbtn插件
@@ -563,6 +564,7 @@ export function createBaseLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 				}
 
 				confirm.update = () => {
+					updateRecastingButton(confirm);
 					// 仅shousha样式处理skills2
 					if (lib.config.phonelayout && confirm.skills2 && isShousha) {
 						if (_status.event.skill && _status.event.skill !== confirm.dataset.skill) {

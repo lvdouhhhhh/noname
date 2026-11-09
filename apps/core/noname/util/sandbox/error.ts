@@ -94,8 +94,14 @@ export class CodeSnippet {
 	}
 }
 
+type ErrorReportWindow = Window & { __nonameReportError?: (text: string) => void };
+
 export class ErrorReporter {
-	static #topAlert = window.alert.bind(null);
+	static #topAlert = (text: string) => {
+		const report = (window as ErrorReportWindow).__nonameReportError;
+		if (report) report(text);
+		else window.alert(text);
+	};
 	static #errorLineNoPatterns = [/<anonymous>:(\d+):\d+\)/, /at <anonymous>:(\d+):\d+/, /eval:(\d+):\d+/, /Function:(\d+):\d+/, /:(\d+):\d+/];
 
 	#snippet: CodeSnippet | null;

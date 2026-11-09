@@ -165,6 +165,10 @@
 	transition: none !important;
 }
 
+.lbtn-confirm[data-skill] > [data-type="skill2"].recasting-btn {
+	display: inline-flex !important;
+}
+
 /** 手牌数量显示 */
 .handcardNumber,
 .handcardNumber1 {

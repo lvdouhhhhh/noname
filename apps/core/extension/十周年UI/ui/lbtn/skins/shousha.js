@@ -6,6 +6,7 @@
 import { _status } from "noname";
 import { createBaseLbtnPlugin } from "./base.js";
 import { initChatSystem } from "../chatSystem.js";
+import { updateRecastingButton } from "../recastButton.js";
 
 /**
  * 创建手杀风格lbtn插件
@@ -759,44 +760,8 @@ export function createShoushaLbtnPlugin(lib, game, ui, get, ai, _status, app) {
 					});
 				});
 
-				const recastingSkills = ui.skills2?.skills?.filter(skill => skill === "_recasting") || [];
-				const currentEvent = _status.event;
-				const currentPlayer = currentEvent?.player || game.me;
-				// _recasting is a hidden core action, so filterEnable rejects it when it is not in the player's skill list.
-				// Check the core action's own filter to restore its button after the core closes ui.skills2.
-				if (
-					!recastingSkills.length &&
-					currentEvent &&
-					currentPlayer &&
-					currentPlayer === game.me &&
-					currentPlayer.isPhaseUsing?.(true) &&
-					lib.skill._recasting?.filter?.(currentEvent, currentPlayer)
-				) {
-					recastingSkills.push("_recasting");
-				}
-				if (recastingSkills.length) {
-					confirm.skills2 = recastingSkills.map(skill => {
-						const item = document.createElement("div");
-						item.link = skill;
-						item.classList.add("recasting-btn");
-						item.innerHTML = `<img draggable='false' src='${lib.assetURL}extension/十周年UI/ui/assets/lbtn/uibutton/CZ.png'>`;
-						item.style.backgroundImage = `url('${lib.assetURL}extension/十周年UI/ui/assets/lbtn/uibutton/game_btn_bg2.png')`;
-						item.style.transform = "scale(0.75)";
-						item.style.setProperty("padding", "25px 10px", "important");
-						item.style.setProperty("margin", "0 -12px", "important");
-						item.dataset.type = "skill2";
-						item.addEventListener(lib.config.touchscreen ? "touchend" : "click", function (e) {
-							if (_status.event?.skill === "_recasting") return;
-							e.stopPropagation();
-							ui.click.skill(this.link);
-							ui.updateSkillControl?.(game.me, true);
-						});
-						return item;
-					});
-					confirm.skills2.forEach(item => confirm.insertBefore(item, confirm.firstChild));
-				}
-
 				confirm.update = () => {
+					updateRecastingButton(confirm);
 					const isLimitedSkill = () => {
 						if (_status.event?.skill && get.info(_status.event.skill)?.limited && _status.event.player === game.me) return true;
 						if (_status.event?.getParent?.(2)?.skill && get.info(_status.event.getParent(2).skill)?.limited && _status.event.getParent(2).player === game.me) return true;

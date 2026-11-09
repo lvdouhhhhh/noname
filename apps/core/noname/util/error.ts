@@ -74,6 +74,146 @@ function normalizeError(reason: unknown): Error {
 	}
 }
 
+type ErrorReportEntry = { time: string; text: string };
+type ErrorReportWindow = Window & { __nonameReportError?: (text: string) => void };
+
+function createErrorReportViewer() {
+	const storageKey = "noname_error_history_v1";
+	const maxEntries = 20;
+	let entries: ErrorReportEntry[] = [];
+	try {
+		const saved = JSON.parse(sessionStorage.getItem(storageKey) || "[]");
+		if (Array.isArray(saved)) entries = saved.filter(item => typeof item?.text === "string").slice(0, maxEntries);
+	} catch {}
+
+	let launcher: HTMLButtonElement | null = null;
+	let panel: HTMLDivElement | null = null;
+	let toast: HTMLDivElement | null = null;
+	let toastTimeout: number | undefined;
+	let reportField: HTMLTextAreaElement | null = null;
+	let historyList: HTMLDivElement | null = null;
+	let status: HTMLDivElement | null = null;
+
+	const save = () => {
+		try {
+			sessionStorage.setItem(storageKey, JSON.stringify(entries));
+		} catch {}
+	};
+
+	const copy = async (text: string) => {
+		try {
+			await navigator.clipboard.writeText(text);
+			if (status) status.textContent = "已复制到剪贴板";
+		} catch {
+			if (!reportField) return;
+			reportField.value = text;
+			reportField.focus();
+			reportField.select();
+			const copied = document.execCommand("copy");
+			if (status) status.textContent = copied ? "已复制到剪贴板" : "已选中内容，请按 Ctrl+C 复制";
+		}
+	};
+
+	const renderHistory = () => {
+		if (!launcher || !historyList) return;
+		launcher.textContent = `错误记录 ${entries.length}`;
+		historyList.replaceChildren();
+		entries.forEach((entry, index) => {
+			const item = document.createElement("button");
+			item.type = "button";
+			item.textContent = `${index + 1}. ${entry.time}`;
+			item.style.cssText = "padding:8px 10px;text-align:left;color:#eee;background:#263244;border:1px solid #475569;border-radius:6px;cursor:pointer;";
+			item.onclick = () => {
+				if (reportField) reportField.value = entry.text;
+				if (status) status.textContent = `已打开第 ${index + 1} 条错误记录`;
+			};
+			historyList?.appendChild(item);
+		});
+	};
+
+	const openPanel = () => {
+		if (panel) {
+			panel.style.display = "flex";
+			return;
+		}
+		panel = document.createElement("div");
+		panel.setAttribute("role", "dialog");
+		panel.setAttribute("aria-label", "错误记录");
+		panel.style.cssText = "position:fixed;z-index:2147483001;inset:4vh 3vw;display:flex;flex-direction:column;gap:10px;padding:14px;color:#f8fafc;background:#101827;border:1px solid #64748b;border-radius:12px;box-shadow:0 12px 45px #0009;font:14px sans-serif;";
+		const heading = document.createElement("div");
+		heading.style.cssText = "display:flex;align-items:center;justify-content:space-between;font-size:18px;font-weight:700;";
+		heading.textContent = "错误记录（对局仍可继续）";
+		const close = document.createElement("button");
+		close.type = "button";
+		close.textContent = "关闭";
+		close.style.cssText = "padding:7px 12px;color:#fff;background:#334155;border:0;border-radius:6px;cursor:pointer;";
+		close.onclick = () => {
+			if (panel) panel.style.display = "none";
+		};
+		heading.appendChild(close);
+		historyList = document.createElement("div");
+		historyList.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;max-height:22vh;overflow:auto;";
+		reportField = document.createElement("textarea");
+		reportField.readOnly = true;
+		reportField.setAttribute("aria-label", "错误详细内容");
+		reportField.style.cssText = "flex:1;min-height:120px;width:100%;resize:none;box-sizing:border-box;padding:10px;color:#f8fafc;background:#0b1220;border:1px solid #475569;border-radius:7px;font:12px/1.45 monospace;user-select:text;white-space:pre;";
+		status = document.createElement("div");
+		status.style.cssText = "min-height:18px;color:#cbd5e1;";
+		const footer = document.createElement("div");
+		footer.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;";
+		const makeButton = (label: string, action: () => void) => {
+			const button = document.createElement("button");
+			button.type = "button";
+			button.textContent = label;
+			button.style.cssText = "padding:8px 12px;color:#fff;background:#2563eb;border:0;border-radius:6px;cursor:pointer;";
+			button.onclick = action;
+			return button;
+		};
+		footer.append(makeButton("复制当前错误", () => copy(reportField?.value || "")));
+		footer.append(makeButton("复制全部记录", () => copy(entries.map(entry => `${entry.time}\n${entry.text}`).join("\n\n----------------\n\n"))));
+		footer.append(makeButton("清空记录", () => {
+			entries = [];
+			save();
+			renderHistory();
+			if (reportField) reportField.value = "";
+			if (status) status.textContent = "错误记录已清空";
+		}));
+		panel.append(heading, historyList, reportField, status, footer);
+		(document.body || document.documentElement).appendChild(panel);
+		renderHistory();
+	};
+
+	const ensureLauncher = () => {
+		if (launcher) return;
+		launcher = document.createElement("button");
+		launcher.type = "button";
+		launcher.style.cssText = "position:fixed;z-index:2147483000;right:14px;bottom:14px;padding:9px 13px;color:#fff;background:#b91c1c;border:1px solid #fecaca;border-radius:20px;box-shadow:0 4px 14px #0008;font:14px sans-serif;cursor:pointer;display:none;";
+		launcher.onclick = openPanel;
+		(document.body || document.documentElement).appendChild(launcher);
+	};
+
+	return (text: string) => {
+		entries.unshift({ time: new Date().toLocaleString(), text });
+		entries = entries.slice(0, maxEntries);
+		save();
+		ensureLauncher();
+		if (launcher) launcher.style.display = "block";
+		renderHistory();
+		if (!toast?.isConnected) {
+			toast = document.createElement("div");
+			toast.style.cssText = "position:fixed;z-index:2147483000;right:14px;bottom:58px;max-width:min(92vw,420px);padding:10px 12px;color:#fff;background:#7f1d1d;border:1px solid #fca5a5;border-radius:8px;box-shadow:0 4px 14px #0008;font:14px sans-serif;";
+			(document.body || document.documentElement).appendChild(toast);
+		}
+		toast.textContent = "游戏错误已保存，可复制或稍后查看";
+		window.clearTimeout(toastTimeout);
+		toastTimeout = window.setTimeout(() => {
+			toast?.remove();
+			toast = null;
+			toastTimeout = undefined;
+		}, 8000);
+	};
+}
+
 /**
  * 目前和StackTrace.fromError一样
  * @param error
@@ -100,6 +240,9 @@ async function fromError(error: Error, opts?: StackTraceGPS.Options): Promise<{ 
 }
 
 export function setOnError({ lib, game, get, _status }) {
+	const reportError = createErrorReportViewer();
+	(window as ErrorReportWindow).__nonameReportError = reportError;
+
 	window.onunhandledrejection = async (event: PromiseRejectionEvent) => {
 		const error = normalizeError(event.reason);
 		window.onerror?.(error.message, undefined, undefined, undefined, error);
@@ -226,7 +369,7 @@ export function setOnError({ lib, game, get, _status }) {
 					})
 				);
 			}
-			alert(log.join("\n"));
+			reportError(log.join("\n"));
 			game.print(log.join("\n"));
 		}
 	};
