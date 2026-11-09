@@ -20,7 +20,7 @@ function hasRecastableCard(player, event) {
 	const filter = lib.skill._recasting?.filter;
 	if (typeof filter === "function") {
 		try {
-			return filter(event, player);
+			if (filter(event, player)) return true;
 		} catch {}
 	}
 	try {
@@ -51,12 +51,18 @@ function syncRecastingButton(confirm = ui.confirm) {
 	}
 	const parent = getButtonParent(confirm);
 	if (!parent) return;
+	if (parent.querySelector('[data-id="_recasting"]:not(.recasting-btn)')) {
+		recastingButton?.remove();
+		recastingButton = null;
+		return;
+	}
 	if (recastingButton?.parentNode === parent) return;
 	recastingButton?.remove();
 
 	const button = document.createElement("div");
 	button.link = "_recasting";
 	button.className = "skillitem enable-skill recasting-btn";
+	button.dataset.id = "_recasting";
 	button.dataset.type = "skill2";
 	button.title = "重铸";
 	button.setAttribute("aria-label", "重铸");

@@ -883,3 +883,86 @@
 	display: none !important;
 	content: none !important;
 }
+
+/* Keep every active skill visible when the game window is narrow. */
+@media (max-width: 1100px) {
+	#arena .skill-control,
+	#arena .skill-controlzuoshou {
+		box-sizing: border-box !important;
+		display: flex !important;
+		flex-direction: column !important;
+		flex-wrap: nowrap !important;
+		align-items: stretch !important;
+		width: fit-content !important;
+		max-width: min(40vw, 300px) !important;
+		min-width: 0 !important;
+		height: auto !important;
+		max-height: none !important;
+		overflow: visible !important;
+		float: none !important;
+		white-space: normal !important;
+		gap: clamp(3px, 0.7vw, 6px) !important;
+	}
+
+	#arena .skill-control {
+		left: auto !important;
+		right: 8px !important;
+	}
+
+	#arena .skill-controlzuoshou {
+		left: 8px !important;
+		right: auto !important;
+	}
+
+	#arena .skill-control > .enable,
+	#arena .skill-control > .trigger,
+	#arena .skill-controlzuoshou > .enable,
+	#arena .skill-controlzuoshou > .trigger {
+		box-sizing: border-box !important;
+		display: flex !important;
+		flex: 0 1 auto !important;
+		flex-direction: row !important;
+		flex-wrap: wrap !important;
+		justify-content: flex-end !important;
+		align-items: center !important;
+		width: fit-content !important;
+		max-width: 100% !important;
+		gap: clamp(3px, 0.7vw, 6px) !important;
+	}
+
+	#arena .skill-control > .enable:empty,
+	#arena .skill-control > .trigger:empty,
+	#arena .skill-controlzuoshou > .enable:empty,
+	#arena .skill-controlzuoshou > .trigger:empty {
+		display: none !important;
+	}
+
+	#arena .skill-controlzuoshou > .enable,
+	#arena .skill-controlzuoshou > .trigger {
+		justify-content: flex-start !important;
+	}
+
+	#arena .skill-control > .enable > *,
+	#arena .skill-control > .trigger > *,
+	#arena .skill-controlzuoshou > .enable > *,
+	#arena .skill-controlzuoshou > .trigger > * {
+		flex: 0 1 auto !important;
+		box-sizing: border-box !important;
+		width: auto !important;
+		min-width: 0 !important;
+		max-width: 100% !important;
+		height: auto !important;
+		min-height: 26px !important;
+		margin: 0 !important;
+		padding: 2px clamp(3px, 0.7vw, 7px) !important;
+		font-size: clamp(10px, 1.6vw, 14px) !important;
+		line-height: 1.15 !important;
+		text-align: center !important;
+		white-space: normal !important;
+		overflow-wrap: anywhere !important;
+	}
+
+	#arena .skill-controlzuoshou .skillitem-child {
+		display: none !important;
+	}
+}
