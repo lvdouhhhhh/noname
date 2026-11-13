@@ -5866,6 +5866,21 @@ export class Library {
 					frequent: true,
 					restart: true,
 				},
+				connect_change_card_count: {
+					name: "手气卡次数",
+					init: 1,
+					input: true,
+					frequent: true,
+					restart: true,
+					intro: "启用手气卡后，每名玩家开局最多换牌的次数（1至100）。选择不换后结束换牌。",
+					onblur(e) {
+						const text = e.target;
+						const value = Number(text.innerText);
+						const count = Number.isFinite(value) ? Math.max(1, Math.min(100, Math.floor(value))) : 1;
+						text.innerText = count;
+						game.saveConfig("connect_change_card_count", count, "identity");
+					},
+				},
 				connect_special_identity: {
 					name: "特殊身份",
 					init: false,
@@ -6606,6 +6621,21 @@ export class Library {
 					init: false,
 					frequent: true,
 					restart: true,
+				},
+				connect_change_card_count: {
+					name: "手气卡次数",
+					init: 1,
+					input: true,
+					frequent: true,
+					restart: true,
+					intro: "启用手气卡后，每名玩家开局最多换牌的次数（1至100）。选择不换后结束换牌。",
+					onblur(e) {
+						const text = e.target;
+						const value = Number(text.innerText);
+						const count = Number.isFinite(value) ? Math.max(1, Math.min(100, Math.floor(value))) : 1;
+						text.innerText = count;
+						game.saveConfig("connect_change_card_count", count, "guozhan");
+					},
 				},
 			},
 			config: {
@@ -7683,6 +7713,21 @@ export class Library {
 					frequent: true,
 					restart: true,
 				},
+				connect_change_card_count: {
+					name: "手气卡次数",
+					init: 1,
+					input: true,
+					frequent: true,
+					restart: true,
+					intro: "启用手气卡后，每名玩家开局最多换牌的次数（1至100）。选择不换后结束换牌。",
+					onblur(e) {
+						const text = e.target;
+						const value = Number(text.innerText);
+						const count = Number.isFinite(value) ? Math.max(1, Math.min(100, Math.floor(value))) : 1;
+						text.innerText = count;
+						game.saveConfig("connect_change_card_count", count, "doudizhu");
+					},
+				},
 				connect_enhance_dizhu: {
 					name: "加强地主",
 					init: "disabled",
@@ -8056,6 +8101,21 @@ export class Library {
 					name: "启用手气卡",
 					init: false,
 					frequent: true,
+				},
+				connect_change_card_count: {
+					name: "手气卡次数",
+					init: 1,
+					input: true,
+					frequent: true,
+					restart: true,
+					intro: "启用手气卡后，每名玩家开局最多换牌的次数（1至100）。选择不换后结束换牌。",
+					onblur(e) {
+						const text = e.target;
+						const value = Number(text.innerText);
+						const count = Number.isFinite(value) ? Math.max(1, Math.min(100, Math.floor(value))) : 1;
+						text.innerText = count;
+						game.saveConfig("connect_change_card_count", count, "single");
+					},
 				},
 				connect_double_character: {
 					name: "启用双将",

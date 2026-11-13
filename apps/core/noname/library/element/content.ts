@@ -4576,21 +4576,23 @@ export const Content: Record<string, ContentFuncByAll | ContentFuncsByAll> = {
 		}
 	},
 	async replaceHandcardsOL(event, trigger, player) {
-		const chooseRemote = () => {
-			game.me.chooseBool({ prompt: "是否置换手牌？" });
+		const configuredCount = Number(lib.configOL.change_card_count ?? 1);
+		const count = Number.isFinite(configuredCount) ? Math.max(1, Math.min(100, Math.floor(configuredCount))) : 1;
+		const chooseRemote = remaining => {
+			game.me.chooseBool({ prompt: `是否置换手牌？（剩余${remaining}次）` });
 			game.resume();
 		};
-		const chooseMe = () => {
-			return game.me.chooseBool({ prompt: "是否置换手牌？" });
+		const chooseMe = remaining => {
+			return game.me.chooseBool({ prompt: `是否置换手牌？（剩余${remaining}次）` });
 		};
-		const choose = (current: Player) => {
+		const choose = (current: Player, remaining: number) => {
 			return new Promise<boolean>(resolve => {
 				if (current.isOnline()) {
 					current.wait(result => resolve(!!result?.bool));
-					current.send(chooseRemote);
+					current.send(chooseRemote, remaining);
 					return;
 				} else if (current === game.me) {
-					const next = chooseMe();
+					const next = chooseMe(remaining);
 					game.me.wait(result => resolve(!!result?.bool));
 					next.forResult()
 						.then(result => game.me.unwait(result))
@@ -4602,61 +4604,63 @@ export const Content: Record<string, ContentFuncByAll | ContentFuncsByAll> = {
 		};
 
 		const events = event.players.map(async current => {
-			const result = await choose(current);
+			for (let remaining = count; remaining > 0; remaining--) {
+				const result = await choose(current, remaining);
 
-			if (!result) {
-				return;
-			}
+				if (!result) {
+					return;
+				}
 
-			/*otherPile主要是针对那些用专属牌堆，不从一般牌堆摸牌的角色（如陈寿），该属性目前只有两个键值对，且都为函数
-			 *getCards函数与获得牌相关，只传入要获得的牌数num作为参数
-			 *discard与手气卡换牌后弃置牌相关，只传入要弃置的牌card作为参数
-			 */
-			const hs = current.getCards("h");
-			const cards: Card[] = [];
-			const otherGetCards = event.otherPile?.[current.playerid]?.getCards;
-			const otherDiscard = event.otherPile?.[current.playerid]?.discard;
-			//先弃牌
-			game.broadcastAll(
-				(player, hs, otherDiscard) => {
-					game.addVideo("lose", player, [get.cardsInfo(hs), [], [], []]);
-					for (const card of hs) {
-						card.removeGaintag(true);
-						if (otherDiscard) {
-							otherDiscard(card);
-						} else {
-							card.discard(false);
-						}
-					}
-				},
-				current,
-				hs,
-				otherDiscard
-			);
-			//再摸牌，先看有没有专属牌堆
-			if (otherGetCards) {
-				cards.addArray(otherGetCards(hs.length));
-			} else {
-				cards.addArray(get.cards(hs.length));
-			}
-			//添加标记相关
-			//event.gaintag支持函数、字符串、数组。数组就是添加一连串的标记；函数的返回格式为[[cards1,gaintag1],[cards2,gaintag2]...]
-			if (event.gaintag?.[current.playerid]) {
-				const gaintag = event.gaintag[current.playerid];
-				const list = typeof gaintag == "function" ? gaintag(hs.length, cards) : [[cards, gaintag]];
+				/*otherPile主要是针对那些用专属牌堆，不从一般牌堆摸牌的角色（如陈寿），该属性目前只有两个键值对，且都为函数
+				 *getCards函数与获得牌相关，只传入要获得的牌数num作为参数
+				 *discard与手气卡换牌后弃置牌相关，只传入要弃置的牌card作为参数
+				 */
+				const hs = current.getCards("h");
+				const cards: Card[] = [];
+				const otherGetCards = event.otherPile?.[current.playerid]?.getCards;
+				const otherDiscard = event.otherPile?.[current.playerid]?.discard;
+				//先弃牌
 				game.broadcastAll(
-					(player, list) => {
-						for (let i = list.length - 1; i >= 0; i--) {
-							player.directgain(list[i][0], null, list[i][1]);
+					(player, hs, otherDiscard) => {
+						game.addVideo("lose", player, [get.cardsInfo(hs), [], [], []]);
+						for (const card of hs) {
+							card.removeGaintag(true);
+							if (otherDiscard) {
+								otherDiscard(card);
+							} else {
+								card.discard(false);
+							}
 						}
 					},
 					current,
-					list
+					hs,
+					otherDiscard
 				);
-			} else {
-				current.directgain(cards);
+				//再摸牌，先看有没有专属牌堆
+				if (otherGetCards) {
+					cards.addArray(otherGetCards(hs.length));
+				} else {
+					cards.addArray(get.cards(hs.length));
+				}
+				//添加标记相关
+				//event.gaintag支持函数、字符串、数组。数组就是添加一连串的标记；函数的返回格式为[[cards1,gaintag1],[cards2,gaintag2]...]
+				if (event.gaintag?.[current.playerid]) {
+					const gaintag = event.gaintag[current.playerid];
+					const list = typeof gaintag == "function" ? gaintag(hs.length, cards) : [[cards, gaintag]];
+					game.broadcastAll(
+						(player, list) => {
+							for (let i = list.length - 1; i >= 0; i--) {
+								player.directgain(list[i][0], null, list[i][1]);
+							}
+						},
+						current,
+						list
+					);
+				} else {
+					current.directgain(cards);
+				}
+				current._start_cards = cards;
 			}
-			current._start_cards = cards;
 		});
 		await Promise.allSettled(events);
 	},
